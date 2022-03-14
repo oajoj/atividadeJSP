@@ -1,6 +1,7 @@
 package miniblog.controller;
 
 import miniblog.model.BlogMessage;
+import miniblog.model.User;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,26 +18,24 @@ public class FormControllerDelete extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Long id = Long.valueOf(req.getParameter("id"));
+        User user = (User) req.getSession().getAttribute("user");
+
         if(id == null){
             req.getRequestDispatcher("miniblog/blog.jsp").forward(req, resp);
         } else {
-            removeMessageFromSessionMessageList(id);
+            removeMessageFromSessionMessageList(id, user);
         }
         req.getRequestDispatcher("/miniblog/blog.jsp").forward(req, resp);
     }
 
-    private void removeMessageFromSessionMessageList(Long id) {
+    private void removeMessageFromSessionMessageList(Long id, User user) {
         List<BlogMessage> blogMessages = (List<BlogMessage>) getServletContext().getAttribute("messagesList");
-
         if(blogMessages == null || blogMessages.isEmpty()) {
             return;
         }
 
-        List<BlogMessage> updatedMessages = blogMessages
-                .stream()
-                .filter(x -> !x.getId().equals(id))
-                .collect(Collectors.toList());
+        blogMessages.removeIf(obj -> obj.getId().equals(id) && obj.getUser().getName().equals(user.getName()));
 
-        getServletContext().setAttribute("messagesList", updatedMessages);
+        getServletContext().setAttribute("messagesList", blogMessages);
     }
 }
